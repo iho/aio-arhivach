@@ -37,38 +37,46 @@ input:focus, textarea:focus {
     border: 0; 
     font-size: 14px; 
     color: #FFFFFF; 
+
+}
+
+
+.content {
+    padding-top: 100px;
+    width:600px;
+    margin:0 auto;
+}
+.help  {
+    width: auto; 
+    border: 0; 
+    font-size: 17px; 
+    font-family: Arial, Helvetica, sans-serif;
 }
 
         </style>
 
     </head>
     <body>
+        <div class=content>
+            <div class=help>
+                <p>It stores current contents of a web page and redirect you a link to the stored copy.</p>
+                <p>
+                So even if the author alters or deletes the page or even the whole site is shut down you will have a proof that it existed.
+                </p>
+            </div>
+            <form class=form action=/ method=POST> 
+                <p class=url> 
+                <input type=url
+              name=url 
+              placeholder=https://www.python.org
+              id=web /> 
+                <label for=url>Paste valid url</label> 
+                </p> 
+                <p class=submit> 
+                <input type=submit value=Submit /> 
+                </p> 
 
-        <form class="form"> 
-
-            <p class="name"> 
-            <input type="text" name="name" id="name" /> 
-            <label for="name">Name</label> 
-            </p> 
-
-            <p class="email"> 
-            <input type="text" name="email" id="email" /> 
-            <label for="email">E-mail</label> 
-            </p> 
-
-            <p class="web"> 
-            <input type="text" name="web" id="web" /> 
-            <label for="web">Website</label> 
-            </p> 
-
-            <p class="text"> 
-            <textarea name="text"></textarea> 
-            </p> 
-
-            <p class="submit"> 
-            <input type="submit" value="Send" /> 
-            </p> 
-
-        </form>
+            </form>
+        </div>
     </body>
 </html>

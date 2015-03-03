@@ -2,14 +2,16 @@
 # coding: utf-8
 
 # from __future__ import division, print_function, unicode_literals
+import datetime
+import random
 import string
+from urllib.parse import urlparse
 
 import aiohttp
 import aioredis
+import ipaddress
 from aiohttp import web
-import random
 
-from urllib.parse import urlparse
 import asyncio
 
 all_chars = string.digits + string.ascii_lowercase + string.ascii_uppercase
@@ -18,23 +20,13 @@ all_chars = string.digits + string.ascii_lowercase + string.ascii_uppercase
 def gen_hash(length=5):
     return ''.join(random.choice(all_chars) for x in range(length))
 
+with open('form.html') as file:
+    string = file.read().encode('utf-8')
 
-@asyncio.coroutine
-def go():
-    redis = yield from aioredis.create_redis(
-        ('localhost', 6379), loop=loop)
-    yield from redis.set('my-key', 'value')
-    val = yield from redis.get('my-key 1')
-    print(val)
-    redis.close()
 
-import ipaddress
-import datetime 
 @asyncio.coroutine
 def index(request):
-    text = "Hello, form"
-#    import ipdb; ipdb.set_trace()
-    return web.Response(body=text.encode('utf-8'))
+    return web.Response(body=string)
 
 
 sem = asyncio.Semaphore(5)
@@ -43,10 +35,13 @@ sem = asyncio.Semaphore(5)
 @asyncio.coroutine
 def index_post(request):
     "Add block for too much gets from one IP"
+    "Replace all urls to absolute by lxml"
+    "Add html with link on original"
     yield from request.post()
     url = request.POST['url']
-    if not url.startswith('http://'):
+    if not (url.startswith('http://') or url.startswith('https://')):
         url = 'http://' + url
+    print(url)
     ip = request.transport.get_extra_info('peername')[0]
     ip = ipaddress.ip_address(ip)
     time = datetime.datetime.now().time()
@@ -100,8 +95,7 @@ def finish(srv, redis, handler):
 if __name__ == '__main__':
     #    asyncio.async(asyncio.gather(*run()))
     loop = asyncio.get_event_loop()
-#    log.info('Crawler start')
-    # need close
+#    log.info('Server start')
 
     srv, redis, handler = loop.run_until_complete(init(loop))
     try:
@@ -109,4 +103,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         loop.run_until_complete(finish(srv, redis, handler))
         loop.stop()
-       # log.info('Crawler stoped')
+       # log.info('Server stoped')
