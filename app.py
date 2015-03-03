@@ -7,6 +7,7 @@ import random
 import string
 from urllib.parse import urlparse
 
+from lxml.html import fromstring, tostring
 import aiohttp
 import aioredis
 import ipaddress
@@ -46,6 +47,11 @@ def index_post(request):
         with (yield from sem):
             r = yield from aiohttp.request('get', url)
         raw = yield from r.text()
+        url = urlparse(url)
+        url = url.scheme + '://' + url.netloc
+        xpath_tree = fromstring(raw)
+        xpath_tree.make_links_absolute(base_url=url)
+        raw = tostring(xpath_tree)
         name = gen_hash()
         yield from redis.set("saved_pages#" + name, raw)
         return aiohttp.web.HTTPFound('/' + name)
