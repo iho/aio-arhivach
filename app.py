@@ -34,9 +34,6 @@ sem = asyncio.Semaphore(5)
 
 @asyncio.coroutine
 def index_post(request):
-    "Add block for too much gets from one IP"
-    "Replace all urls to absolute by lxml"
-    "Add html with link on original"
     yield from request.post()
     url = request.POST['url']
     if not (url.startswith('http://') or url.startswith('https://')):
