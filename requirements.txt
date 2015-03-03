@@ -3,3 +3,4 @@ aioredis==0.1.5
 hiredis==0.1.6
 ipdb==0.8
 ipython==3.0.0
+lxml==3.4.2
