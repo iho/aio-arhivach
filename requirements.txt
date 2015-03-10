@@ -3,3 +3,4 @@ aiopg
 sqlalchemy
 lxml
 ptpdb
+ipdb

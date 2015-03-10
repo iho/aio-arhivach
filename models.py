@@ -32,10 +32,10 @@ if __name__ == '__main__':
     uri = os.environ.get('DATABASE_URL', uri)
     en = create_engine(uri)
     Base.metadata.bind = en
+    Base.metadata.drop_all()
+    Base.metadata.create_all()
     from sqlalchemy.orm import sessionmaker
     session = sessionmaker(bind=en)()
     pages = session.query(Page).all()
-    # Base.metadata.drop_all()
-    # Base.metadata.create_all()
     from ptpdb import set_trace
     set_trace()
