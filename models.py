@@ -37,4 +37,5 @@ if __name__ == '__main__':
     from sqlalchemy.orm import sessionmaker
     session = sessionmaker(bind=en)()
     pages = session.query(Page).all()
-    import ipdb; ipdb.set_trace()
+    import ipdb
+    ipdb.set_trace()

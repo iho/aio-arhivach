@@ -119,7 +119,7 @@ def init(loop=None):
     handler = app.make_handler()
     PORT = os.environ.get('PORT', '8881')
     srv = yield from loop.create_server(handler,
-                                        '127.0.0.1', int(PORT))
+                                        '0.0.0.0', int(PORT))
     print("Server started at http://127.0.0.1:" + PORT)
     return srv,  handler
 
