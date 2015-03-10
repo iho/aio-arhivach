@@ -2,5 +2,5 @@ aiohttp
 aiopg
 sqlalchemy
 lxml
-ptpdb
+-e git+https://github.com/jonathanslenders/ptpdb.git
 ipdb
