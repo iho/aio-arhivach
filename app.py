@@ -66,7 +66,7 @@ def page(request):
         if body:
             return web.Response(body=body)
     return web.HTTPNotFound()
-
+import os
 
 @asyncio.coroutine
 def init(loop=None):
@@ -81,10 +81,10 @@ def init(loop=None):
     app.router.add_route('POST', '/', index_post)
     app.router.add_route('GET', '/{name}', page)
     handler = app.make_handler()
-
+    PORT = os.environ['PORT']
     srv = yield from loop.create_server(handler,
-                                        '127.0.0.1', 8080)
-    print("Server started at http://127.0.0.1:8080")
+                                        '127.0.0.1', int(PORT))
+    print("Server started at http://127.0.0.1:"+PORT)
     return srv, redis, handler
 
 
