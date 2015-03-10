@@ -1,4 +1,5 @@
 aiohttp
 aiopg
 sqlalchemy
-lxml==3.4.2       
+lxml
+ptpdb

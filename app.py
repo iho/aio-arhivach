@@ -14,7 +14,6 @@ from aiohttp import web
 from aiopg.sa import create_engine
 from lxml.html import fromstring, tostring
 
-from lxml import etree
 import asyncio
 from models import Page
 
@@ -35,11 +34,7 @@ def index(request):
 
 sem = asyncio.Semaphore(5)
 Page = Page.__table__
-utf8_parser = etree.HTMLParser(encoding='utf-8')
 
-def parse_from_unicode(unicode_str):
-    s = unicode_str.encode('utf-8')
-    return fromstring(s, parser=utf8_parser)
 
 @asyncio.coroutine
 def index_post(request):
@@ -55,24 +50,19 @@ def index_post(request):
         with (yield from sem):
             r = yield from aiohttp.request('get', url)
         raw = yield from r.text()
-#        raw_ = raw
- #       raw = raw.encode('utf-8')
         url_ = url
         url = urlparse(url)
         base_url = url.scheme + '://' + url.netloc
-        xpath_tree_old = fromstring(raw)
-        xpath_tree = parse_from_unicode(raw)
-        import ipdb; ipdb.set_trace()   
-        xpath_tree.make_links_absolute(base_url=url)
-        raw = tostring(xpath_tree)
+        xpath_tree = fromstring(raw)
+        xpath_tree.make_links_absolute(base_url=base_url)
+        raw = tostring(xpath_tree).decode('utf-8')
         name = gen_hash()
-        import ipdb; ipdb.set_trace()
 
         query = Page.insert().values(
             key=name,
             ip=ip_,
             url=url_,
-            body=str(raw)
+            body=raw
         )
         with (yield from request.app['database']) as conn:
             yield from conn.execute(query)
@@ -91,9 +81,21 @@ def page(request):
             res = yield from res.first()
 
         if res:
-            body = res['body']
-            return web.Response(text=body)
+            body = res['body'].encode('utf-8')
+            return web.Response(body=body)
     return web.HTTPNotFound()
+
+
+def parse_uri(uri):
+    from urllib.parse import urlparse
+    uri = urlparse(uri)
+    return dict(
+        user=uri.username,
+        password=uri.password,
+        database=uri.path[1:],
+        port=str(uri.port),
+        host=uri.hostname
+    )
 
 
 @asyncio.coroutine
@@ -101,18 +103,21 @@ def init(loop=None):
     #    loop = loop or asyncio.get_event_loop()
     app = aiohttp.web.Application(loop=loop)
 
-    engine = yield from create_engine(user='aiopg',
-                                      database='aiopg',
-                                      host='127.0.0.1',
-                                      port='5433',
-                                      password='passwd')
+    uri = os.environ.get('DATABASE_URL')
+    default_uri = dict(user='aiopg',
+                       database='aiopg',
+                       host='127.0.0.1',
+                       port='5433',
+                       password='passwd')
+    uri = parse_uri(uri) if uri else default_uri
+    engine = yield from create_engine(**uri)
 
     app['database'] = engine
     app.router.add_route('GET', '/', index)
     app.router.add_route('POST', '/', index_post)
     app.router.add_route('GET', '/{name}', page)
     handler = app.make_handler()
-    PORT = os.environ['PORT']
+    PORT = os.environ.get('PORT', '8881')
     srv = yield from loop.create_server(handler,
                                         '127.0.0.1', int(PORT))
     print("Server started at http://127.0.0.1:" + PORT)
@@ -124,7 +129,6 @@ def finish(srv,  handler):
     srv.close()
     yield from handler.finish_connections()
     yield from srv.wait_closed()
-
 if __name__ == '__main__':
     #    asyncio.async(asyncio.gather(*run()))
     loop = asyncio.get_event_loop()
@@ -137,41 +141,3 @@ if __name__ == '__main__':
         loop.run_until_complete(finish(srv,  handler))
         loop.stop()
        # log.info('Server stoped')
-# environ.get('DATABASE_URL')
-# furl.furl
-
-# In[2]:
-#     from urllib.parse import urlparse
-
-
-# In[13]:
-#     ss.username
-# Out[13]:
-#     'aiopg'
-
-# In[14]:
-#     ss.host
-# Out[14]:
-#     'localhost'
-
-# In[15]:
-#     ss.password
-# Out[15]:
-#     'passwd'
-
-
-# In[17]:
-#     ss.path
-# Out[17]:
-#     Path('/aiopg')
-
-# In[18]:
-#     ss.port
-# Out[18]:
-#     5433
-
-# (user='aiopg',
-#  database='aiopg',
-#  host='127.0.0.1',
-#  port='5433',
-#  password='passwd')
