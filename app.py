@@ -27,8 +27,7 @@ with open('form.html') as file:
     string = file.read().encode('utf-8')
 
 
-@asyncio.coroutine
-def index(request):
+async def index(request):
     return web.Response(body=string)
 
 
@@ -36,9 +35,8 @@ sem = asyncio.Semaphore(5)
 Page = Page.__table__
 
 
-@asyncio.coroutine
-def index_post(request):
-    yield from request.post()
+async def index_post(request):
+    await request.post()
     url = request.POST['url']
     if not (url.startswith('http://') or url.startswith('https://')):
         url = 'http://' + url
@@ -47,9 +45,9 @@ def index_post(request):
     ip = ipaddress.ip_address(ip_)
     time = datetime.datetime.now().time()
     if ip:
-        with (yield from sem):
-            r = yield from aiohttp.request('get', url)
-        raw = yield from r.text()
+        async with  sem:
+            r = await aiohttp.request('get', url)
+        raw = await r.text()
         url_ = url
         url = urlparse(url)
         base_url = url.scheme + '://' + url.netloc
@@ -64,21 +62,20 @@ def index_post(request):
             url=url_,
             body=raw
         )
-        with (yield from request.app['database']) as conn:
-            yield from conn.execute(query)
+        async with request.app['database'] as conn:
+            await conn.execute(query)
         return aiohttp.web.HTTPFound('/' + name)
     return web.Response(body="Error")
 
 
-@asyncio.coroutine
-def page(request):
+async def page(request):
     name = request.match_info.get('name', None)
     if name:
 
         query = Page.select().where(Page.c.key == name)
-        with (yield from request.app['database']) as conn:
-            res = yield from conn.execute(query)
-            res = yield from res.first()
+        async with request.app['database'] as conn:
+            res = await conn.execute(query)
+            res = await res.first()
 
         if res:
             body = res['body'].encode('utf-8')
@@ -98,8 +95,7 @@ def parse_uri(uri):
     )
 
 
-@asyncio.coroutine
-def init(loop=None):
+async def init(loop=None):
     #    loop = loop or asyncio.get_event_loop()
     app = aiohttp.web.Application(loop=loop)
 
@@ -110,7 +106,7 @@ def init(loop=None):
                        port='5433',
                        password='passwd')
     uri = parse_uri(uri) if uri else default_uri
-    engine = yield from create_engine(**uri)
+    engine = await create_engine(**uri)
 
     app['database'] = engine
     app.router.add_route('GET', '/', index)
@@ -118,17 +114,17 @@ def init(loop=None):
     app.router.add_route('GET', '/{name}', page)
     handler = app.make_handler()
     PORT = os.environ.get('PORT', '8881')
-    srv = yield from loop.create_server(handler,
+    srv = await loop.create_server(handler,
                                         '0.0.0.0', int(PORT))
     print("Server started at http://127.0.0.1:" + PORT)
     return srv,  handler
 
 
-@asyncio.coroutine
-def finish(srv,  handler):
+
+async def finish(srv,  handler):
     srv.close()
-    yield from handler.finish_connections()
-    yield from srv.wait_closed()
+    await handler.finish_connections()
+    await srv.wait_closed()
 if __name__ == '__main__':
     #    asyncio.async(asyncio.gather(*run()))
     loop = asyncio.get_event_loop()
